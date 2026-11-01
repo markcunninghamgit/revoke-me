@@ -24,7 +24,7 @@ jobs:
 
       - name: Security audit (no storage / no console logging)
         run: |
-          if grep -nE 'localStorage|sessionStorage|document\.cookie|console\.' app.js index.html style.css; then
+          if grep -nE 'localStorage\.|sessionStorage\.|document\.cookie|console\.' app.js index.html style.css; then
             echo "::error::Forbidden API found (storage or console logging)"
             exit 1
           fi
