@@ -97,6 +97,20 @@ docker build -t revoke-me .
 docker run -d -p 8080:80 --read-only --name revoke-me revoke-me
 ```
 
+Or pull the CI-published image straight from GHCR (built on every push to main):
+
+```sh
+docker run -d -p 8080:80 --read-only ghcr.io/MARKCUNNINGHAMGIT/revoke-me:latest
+```
+
+## CI
+
+`.github/workflows/ci.yml` runs on every branch: syntax check, a security audit
+(fails if storage or console APIs appear), CSP verification against the spec'd
+origins, the smoke test, and a Docker build + container smoke test. On main it
+also pushes the image to `ghcr.io/<owner>/revoke-me` (tags: `latest`, commit
+SHA) and creates a GitHub release with the static site bundled as `site.zip`.
+
 The nginx config serves only static files — no CGI, no proxying, nothing dynamic —
 so the self-hosted instance is exactly as trustworthy as the hosted one: read the
 30-odd lines of config, then verify the served files match the repo.
