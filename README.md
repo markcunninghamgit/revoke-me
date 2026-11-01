@@ -15,6 +15,18 @@ host, the site is trivially self-hostable — see [Self-hosting](#self-hosting-w
 Released under the [Unlicense](LICENSE) — dedicated to the public domain. Copy it, modify
 it, sell it, run it anywhere, no restrictions, no attribution required.
 
+## ⚠️ Status: draft, untested
+
+This project is a **draft that has not been tested yet**. It was written entirely with
+Mistral AI (Vibe Code) — every line of the site, the Python CLI, the CI pipeline, and the
+Docker packaging was AI-generated. Automated checks pass (syntax, unit tests with mocked
+network, CI builds, container smoke tests), but **no revocation has been verified
+end-to-end against a real, live token**.
+
+Until this software has been exercised against real credentials, treat every reported
+outcome — especially `CONFIRMED_REVOKED` — with suspicion, and verify revocation with the
+provider directly (their web UI or API) before considering a credential killed.
+
 ## What it does
 
 1. **Detect** the provider from the token pattern (GitHub `ghp_…`, Slack `xoxb-…`,
