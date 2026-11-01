@@ -43,10 +43,14 @@ jobs:
 
       - name: Smoke test Docker image (static server)
         run: |
-          docker run -d --name revoke-me-ci -p 8080:80 --read-only revoke-me:ci
+          docker run -d --name revoke-me-ci -p 8080:80 --read-only \
+            --tmpfs /var/cache/nginx --tmpfs /var/run \
+            revoke-me:ci
           sleep 2
+          docker ps --filter name=revoke-me-ci --format '{{.Names}}' | grep -q revoke-me-ci \
+            || { echo '::error::container not running'; docker logs revoke-me-ci; exit 1; }
           for p in / /app.js /style.css; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8080$p")
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8080$p" || echo "curl-failed")
             [ "$code" = "200" ] || { echo "::error::GET $p returned $code"; docker logs revoke-me-ci; exit 1; }
           done
           curl -s http://localhost:8080/ | grep -q "Content-Security-Policy" \
