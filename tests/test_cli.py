@@ -50,9 +50,11 @@ def test_confirmed_revoked(monkeypatch, capsys):
 
 
 def test_sent_unverified(monkeypatch, capsys):
+    """SENT_UNVERIFIED is a distinct outcome: exit 3, with a may-still-be-live warning."""
     _patch_providers(monkeypatch, live=True, rev_sent=True, post_dead=False)
-    assert run_cli(monkeypatch, ["--yes"], "ghp_x") == 0
-    assert "SENT_UNVERIFIED" in capsys.readouterr().out
+    assert run_cli(monkeypatch, ["--yes"], "ghp_x") == 3
+    out = capsys.readouterr().out
+    assert "SENT_UNVERIFIED" in out and "may still be live" in out
 
 
 def test_abort_declines_confirm(monkeypatch, capsys):
@@ -66,3 +68,25 @@ def test_no_revoke_flag(monkeypatch, capsys):
     assert run_cli(monkeypatch, ["--no-revoke"], "ghp_x") == 0
     out = capsys.readouterr().out
     assert "not revoking" in out and "LIVE" in out
+
+
+def test_sent_unverified_exit_code(monkeypatch, capsys):
+    """SENT_UNVERIFIED must be distinguishable from success (exit 3, not 0)."""
+    _patch_providers(monkeypatch, live=True, rev_sent=True, post_dead=False)
+    assert run_cli(monkeypatch, ["--yes"], "ghp_x") == 3
+    assert "may still be live" in capsys.readouterr().out
+
+
+def test_already_dead_explains_no_revoke(monkeypatch, capsys):
+    _patch_providers(monkeypatch, live=False, rev_sent=True, post_dead=True)
+    assert run_cli(monkeypatch, ["--yes"], "ghp_x") == 0
+    out = capsys.readouterr().out
+    assert "No revoke was sent" in out
+    assert "wrong key" in out
+
+
+def test_revoke_failure_warns_may_be_live(monkeypatch, capsys):
+    _patch_providers(monkeypatch, live=True, rev_sent=False, post_dead=False, pre_err=None)
+    monkeypatch.setattr(cli.providers, "revoke", lambda p, t, s: (False, "", "HTTP 500"))
+    assert run_cli(monkeypatch, ["--yes"], "ghp_x") == 2
+    assert "may still be live" in capsys.readouterr().out
