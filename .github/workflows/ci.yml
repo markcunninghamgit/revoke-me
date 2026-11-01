@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax check
+        run: node --check app.js
+
+      - name: Security audit (no storage / no console logging)
+        run: |
+          if grep -nE 'localStorage\.|sessionStorage\.|document\.cookie|console\.' app.js index.html style.css; then
+            echo "::error::Forbidden API found (storage or console logging)"
+            exit 1
+          fi
+
+      - name: CSP matches spec
+        run: |
+          for origin in api.github.com slack.com oauth2.googleapis.com api.dropboxapi.com gitlab.com; do
+            grep -q "$origin" index.html || { echo "::error::$origin missing from CSP"; exit 1; }
+          done
+
+      - name: Smoke test
+        run: node tests/smoke.js
+
+      - name: Build Docker image
+        run: docker build -t revoke-me:ci .
+
+      - name: Smoke test Docker image (static server)
+        run: |
+          docker run -d --name revoke-me-ci -p 8080:80 --read-only \
+            --tmpfs /var/cache/nginx --tmpfs /var/run \
+            revoke-me:ci
+          sleep 2
+          docker ps --filter name=revoke-me-ci --format '{{.Names}}' | grep -q revoke-me-ci \
+            || { echo '::error::container not running'; docker logs revoke-me-ci; exit 1; }
+          for p in / /app.js /style.css; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8080$p" || echo "curl-failed")
+            [ "$code" = "200" ] || { echo "::error::GET $p returned $code"; docker logs revoke-me-ci; exit 1; }
+          done
+          curl -s http://localhost:8080/ | grep -q "Content-Security-Policy" \
+            || { echo "::error::CSP meta missing from served page"; exit 1; }
+          docker rm -f revoke-me-ci
+
+  publish:
+    name: Publish image & release (main)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/revoke-me:latest
+            ghcr.io/${{ github.repository_owner }}/revoke-me:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Bundle static site
+        run: zip -r site.zip index.html style.css app.js
+
+      - name: Tag name
+        id: tag
+        run: echo "name=$(date -u +%Y%m%d-%H%M%S)-$(echo ${{ github.sha }} | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.tag.outputs.name }}" site.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "revoke-me ${{ steps.tag.outputs.name }}" \
+            --notes "Static site bundle (index.html, style.css, app.js). Docker image: ghcr.io/${{ github.repository_owner }}/revoke-me@${{ github.sha }}"

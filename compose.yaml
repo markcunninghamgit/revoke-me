@@ -1,0 +1,10 @@
+services:
+  revoke-me:
+    build: .
+    ports:
+      - "8080:80"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    restart: unless-stopped
