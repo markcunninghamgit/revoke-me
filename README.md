@@ -66,6 +66,32 @@ Twilio, npm, AWS, Azure, Stripe, OpenAI, and others are intentionally out of sco
 APIs either don't permit browser calls (CORS preflight fails) or have no self-revoke
 endpoint (revocation requires a separate authorized credential).
 
+## Python CLI (`revoke-me`)
+
+The same logic as a pip-installable command-line tool — for when you'd rather not touch a
+browser (or any hosted page) with a live token. The token is read via a hidden
+`getpass` prompt: it never lands in shell history, is never logged, and only ever goes to
+the provider's own revoke/info endpoints.
+
+```sh
+git clone https://github.com/markcunninghamgit/revoke-me
+cd revoke-me
+python3 -m venv .venv
+.venv/bin/pip install --require-hashes -r requirements.txt   # hash-pinned deps
+.venv/bin/pip install -e . --no-deps
+.venv/bin/revoke-me            # or: .venv/bin/revoke-me --provider dropbox
+```
+
+Options: `--provider` forces a provider (Dropbox tokens aren't pattern-matchable),
+`--no-revoke` only inspects the token and shows the identity, `--yes` skips the
+confirmation prompt. Outcomes match the website: `ALREADY_DEAD`, `CONFIRMED_REVOKED`,
+`SENT_UNVERIFIED`, or `FAILED`.
+
+Built sdist and wheel artifacts are attached to each GitHub release, so you can also
+`pip install revoke-me --find-links <release-url>` or upload the package to a private
+index. The packaging layout (`src/`, `pyproject.toml`, console-script entry point) follows
+current PyPI conventions, so it can be submitted to PyPI as-is.
+
 ## The identity-confirmation flow
 
 The point of the pre-check is that you shouldn't revoke blind. Before anything is sent,
