@@ -253,3 +253,38 @@ footer a { color: #58a6ff; }
   #warning-banner h2 { font-size: 1rem; }
   #warning-banner p { font-size: 0.9rem; }
 }
+
+/* Draft / untested notice: distinct from the red security warning */
+#draft-banner {
+  background: #2b260f;
+  border: 1px solid #d29922;
+  border-left: 4px solid #d29922;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+#draft-banner h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  color: #d29922;
+}
+
+#draft-banner p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+#draft-banner code {
+  font-family: ui-monospace, monospace;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+
+@media (max-width: 420px) {
+  #draft-banner { padding: 1rem; }
+  #draft-banner h2 { font-size: 1rem; }
+  #draft-banner p { font-size: 0.9rem; }
+}
