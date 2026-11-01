@@ -18,6 +18,22 @@
 </head>
 <body>
 <main>
+  <section id="warning-banner" role="alert">
+    <h2>⚠️ Should you use this website? No — not this copy.</h2>
+    <p><strong>If you didn't host it yourself, don't paste tokens into it.</strong> You should
+       never paste live secrets into a random website, and you shouldn't trust one on blind
+       faith. Yes, you can view source today — but how do you know the author didn't change
+       it (or backdoor it) by the time you come back tomorrow? A static page you read once is
+       not a page you can trust forever. The same goes for pasting JWTs into
+       <a href="https://www.jwt.io/" rel="noopener noreferrer">jwt.io</a> and hoping it
+       "stays in the browser" — that's faith, not verification.</p>
+    <p><strong>This site is a proof of concept.</strong> It works, and you can use the hosted
+       copy if you accept the risk — but if you're worth your salt as a security engineer,
+       you should be hosting it yourself. It's three static files in a public-domain repo:
+       clone it, read every line, run it from disk or with one Docker command, and paste
+       tokens only into the copy <em>you</em> control. See the footer and README for how.</p>
+  </section>
+
   <header>
     <h1>revoke.me</h1>
     <p class="tagline">Paste a leaked token. See whose it is. Kill it — from this page, straight to the provider.</p>
