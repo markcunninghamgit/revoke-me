@@ -11,6 +11,9 @@ const mkEl = () => ({
 global.document = {
   getElementById: (id) => els[id] || mkEl(),
   addEventListener() {},
+  querySelectorAll: () => [],
+  createElement: () => mkEl(),
+  body: { appendChild() {}, removeChild() {} },
 };
 global.window = { addEventListener() {} };
 global.fetch = () => Promise.resolve({ type: 'opaque', status: 0 });
