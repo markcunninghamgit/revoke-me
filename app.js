@@ -574,12 +574,14 @@ document.querySelectorAll('.cli-block').forEach((block) => {
     const visible = Array.from(panes).find((p) => !p.hidden);
     const text = visible.querySelector('code').textContent;
     const btn = ev.currentTarget;
-    const done = () => { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); };
+    const done = (ok) => {
+      btn.textContent = ok ? 'Copied!' : 'Copy failed — select manually';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1800);
+    };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(() => { fallbackCopy(text); done(); });
+      navigator.clipboard.writeText(text).then(() => done(true)).catch(() => { done(fallbackCopy(text)); });
     } else {
-      fallbackCopy(text);
-      done();
+      done(fallbackCopy(text));
     }
   });
 });
@@ -591,6 +593,8 @@ function fallbackCopy(text) {
   ta.style.opacity = '0';
   document.body.appendChild(ta);
   ta.select();
-  try { document.execCommand('copy'); } catch (e) { /* best effort */ }
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
   document.body.removeChild(ta);
+  return ok;
 }

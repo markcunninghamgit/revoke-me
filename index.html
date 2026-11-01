@@ -87,16 +87,19 @@
         <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
       </div>
       <div class="cli-pane" data-shell="bash">
-        <pre><code>read -rs "GitHub token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
-  -X POST https://api.github.com/credentials/revoke \
-  -H 'Accept: application/vnd.github+json' \
-  -H 'Content-Type: application/json' \
-  --data "{\"credentials\":[\"$TOKEN\"]}"; unset TOKEN</code></pre>
-        <p class="cli-caption">202 = revoked. Unauthenticated endpoint — no auth header. <a href="https://docs.github.com/en/rest/credentials/revoke" rel="noopener noreferrer">GitHub API docs — credentials/revoke</a></p>
+        <pre><code>printf 'GitHub token: ' >&amp;2; read -rs TOKEN &amp;&amp; { \
+  echo 'Checking token is live...'; \
+  curl -sS -o /dev/null -w 'live: HTTP %{http_code}\n' -H "Authorization: Bearer $TOKEN" https://api.github.com/user; \
+  echo 'Revoking...'; \
+  curl -sS -o /dev/null -w 'revoke: HTTP %{http_code}\n' -X POST https://api.github.com/credentials/revoke -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' --data "{\"credentials\":[\"$TOKEN\"]}"; \
+  echo 'Confirming dead...'; \
+  curl -sS -o /dev/null -w 'after: HTTP %{http_code} (401 = dead)\n' -H "Authorization: Bearer $TOKEN" https://api.github.com/user; \
+  }; unset TOKEN</code></pre>
+        <p class="cli-caption">202 = revoked. Unauthenticated endpoint — no auth header. <a href="https://docs.github.com/en/rest/credentials/revoke" rel="noopener noreferrer">GitHub API docs — credentials/revoke</a> Three steps: live check (200), revoke (202), confirm dead (401). If the live check already shows 401, the token is dead — nothing was killed; check you pasted the right key.</p>
       </div>
       <div class="cli-pane" data-shell="powershell" hidden>
-        <pre><code>$sec = Read-Host -AsSecureString 'GitHub token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X POST https://api.github.com/credentials/revoke -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' --data "{\"credentials\\":[\"$TOKEN\"]}"; Remove-Variable TOKEN,sec</code></pre>
-        <p class="cli-caption">202 = revoked. Unauthenticated endpoint — no auth header. <a href="https://docs.github.com/en/rest/credentials/revoke" rel="noopener noreferrer">GitHub API docs — credentials/revoke</a></p>
+        <pre><code>$sec = Read-Host -AsSecureString 'GitHub token'; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec); try { $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto($b); 'Checking token is live...'; curl.exe -sS -o NUL -w 'live: HTTP %{http_code}\n' -H "Authorization: Bearer $TOKEN" https://api.github.com/user; 'Revoking...'; [pscustomobject]@{credentials=@($TOKEN)} | ConvertTo-Json -Compress | curl.exe -sS -o NUL -w 'revoke: HTTP %{http_code}\n' -X POST https://api.github.com/credentials/revoke -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' --data '@-'; 'Confirming dead...'; curl.exe -sS -o NUL -w 'after: HTTP %{http_code} (401 = dead)\n' -H "Authorization: Bearer $TOKEN" https://api.github.com/user; } finally { if ($b -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }; $sec.Dispose(); Remove-Variable TOKEN -ErrorAction SilentlyContinue }</code></pre>
+        <p class="cli-caption">202 = revoked. Unauthenticated endpoint — no auth header. <a href="https://docs.github.com/en/rest/credentials/revoke" rel="noopener noreferrer">GitHub API docs — credentials/revoke</a> Three steps: live check (200), revoke (202), confirm dead (401). If the live check already shows 401, the token is dead — nothing was killed; check you pasted the right key.</p>
       </div>
       <button class="copy-btn" type="button">Copy</button>
     </div>
@@ -108,13 +111,19 @@
         <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
       </div>
       <div class="cli-pane" data-shell="bash">
-        <pre><code>read -rs "Slack token: " TOKEN &amp;&amp; curl -sS https://slack.com/api/auth.revoke \
-  --data-urlencode "token=$TOKEN"; printf '\n'; unset TOKEN</code></pre>
-        <p class="cli-caption">{"ok":true,"revoked":true} in the reply means revoked. <a href="https://docs.slack.dev/reference/methods/auth.revoke/" rel="noopener noreferrer">Slack API docs — auth.revoke</a></p>
+        <pre><code>printf 'Slack token: ' >&amp;2; read -rs TOKEN &amp;&amp; { \
+  echo 'Checking token is live...'; \
+  curl -sS -w ' live: %{http_code}\n' https://slack.com/api/auth.test --data-urlencode "token=$TOKEN"; \
+  echo 'Revoking...'; \
+  curl -sS -w ' revoke: %{http_code}\n' https://slack.com/api/auth.revoke --data-urlencode "token=$TOKEN"; \
+  echo 'Confirming dead...'; \
+  curl -sS -w ' after: %{http_code}\n' https://slack.com/api/auth.test --data-urlencode "token=$TOKEN"; \
+  unset TOKEN; }</code></pre>
+        <p class="cli-caption">{"ok":true,"revoked":true} in the reply means revoked. <a href="https://docs.slack.dev/reference/methods/auth.revoke/" rel="noopener noreferrer">Slack API docs — auth.revoke</a> Three steps: live check (ok:true), revoke (revoked:true), confirm dead (invalid_auth/token_revoked). If the live check already fails, nothing was killed.</p>
       </div>
       <div class="cli-pane" data-shell="powershell" hidden>
-        <pre><code>$sec = Read-Host -AsSecureString 'Slack token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS https://slack.com/api/auth.revoke --data-urlencode "token=$TOKEN"; ''; Remove-Variable TOKEN,sec</code></pre>
-        <p class="cli-caption">{"ok":true,"revoked":true} in the reply means revoked. <a href="https://docs.slack.dev/reference/methods/auth.revoke/" rel="noopener noreferrer">Slack API docs — auth.revoke</a></p>
+        <pre><code>$sec = Read-Host -AsSecureString 'Slack token'; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec); try { $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto($b); 'Checking token is live...'; curl.exe -sS -w ' live: %{http_code}\n' https://slack.com/api/auth.test --data-urlencode "token=$TOKEN"; 'Revoking...'; curl.exe -sS -w ' revoke: %{http_code}\n' https://slack.com/api/auth.revoke --data-urlencode "token=$TOKEN"; 'Confirming dead...'; curl.exe -sS -w ' after: %{http_code}\n' https://slack.com/api/auth.test --data-urlencode "token=$TOKEN"; } finally { if ($b -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }; $sec.Dispose(); Remove-Variable TOKEN -ErrorAction SilentlyContinue }</code></pre>
+        <p class="cli-caption">{"ok":true,"revoked":true} in the reply means revoked. <a href="https://docs.slack.dev/reference/methods/auth.revoke/" rel="noopener noreferrer">Slack API docs — auth.revoke</a> Three steps: live check (ok:true), revoke (revoked:true), confirm dead (invalid_auth/token_revoked). If the live check already fails, nothing was killed.</p>
       </div>
       <button class="copy-btn" type="button">Copy</button>
     </div>
@@ -126,13 +135,19 @@
         <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
       </div>
       <div class="cli-pane" data-shell="bash">
-        <pre><code>read -rs "GitLab token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
-  -X DELETE "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; unset TOKEN</code></pre>
-        <p class="cli-caption">204 = revoked. 401 beforehand = already dead. <a href="https://docs.gitlab.com/api/personal_access_tokens/" rel="noopener noreferrer">GitLab API docs — personal access tokens (self-revoke)</a></p>
+        <pre><code>printf 'GitLab token: ' >&amp;2; read -rs TOKEN &amp;&amp; { \
+  echo 'Checking token is live...'; \
+  curl -sS -o /dev/null -w 'live: HTTP %{http_code}\n' "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; \
+  echo 'Revoking...'; \
+  curl -sS -o /dev/null -w 'revoke: HTTP %{http_code}\n' -X DELETE "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; \
+  echo 'Confirming dead...'; \
+  curl -sS -o /dev/null -w 'after: HTTP %{http_code} (401 = dead)\n' "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; \
+  unset TOKEN; }</code></pre>
+        <p class="cli-caption">204 = revoked. 401 beforehand = already dead. <a href="https://docs.gitlab.com/api/personal_access_tokens/" rel="noopener noreferrer">GitLab API docs — personal access tokens (self-revoke)</a> Three steps: live check (200), revoke (204), confirm dead (401). If the live check already shows 401, the token is dead — nothing was killed.</p>
       </div>
       <div class="cli-pane" data-shell="powershell" hidden>
-        <pre><code>$sec = Read-Host -AsSecureString 'GitLab token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X DELETE "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; Remove-Variable TOKEN,sec</code></pre>
-        <p class="cli-caption">204 = revoked. 401 beforehand = already dead. <a href="https://docs.gitlab.com/api/personal_access_tokens/" rel="noopener noreferrer">GitLab API docs — personal access tokens (self-revoke)</a></p>
+        <pre><code>$sec = Read-Host -AsSecureString 'GitLab token'; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec); try { $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto($b); 'Checking token is live...'; curl.exe -sS -o NUL -w 'live: HTTP %{http_code}\n' "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; 'Revoking...'; curl.exe -sS -o NUL -w 'revoke: HTTP %{http_code}\n' -X DELETE "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; 'Confirming dead...'; curl.exe -sS -o NUL -w 'after: HTTP %{http_code} (401 = dead)\n' "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; } finally { if ($b -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }; $sec.Dispose(); Remove-Variable TOKEN -ErrorAction SilentlyContinue }</code></pre>
+        <p class="cli-caption">204 = revoked. 401 beforehand = already dead. <a href="https://docs.gitlab.com/api/personal_access_tokens/" rel="noopener noreferrer">GitLab API docs — personal access tokens (self-revoke)</a> Three steps: live check (200), revoke (204), confirm dead (401). If the live check already shows 401, the token is dead — nothing was killed.</p>
       </div>
       <button class="copy-btn" type="button">Copy</button>
     </div>
@@ -144,13 +159,18 @@
         <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
       </div>
       <div class="cli-pane" data-shell="bash">
-        <pre><code>read -rs "Dropbox token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
-  -X POST https://api.dropboxapi.com/2/auth/token/revoke \
-  -H "Authorization: Bearer $TOKEN"; unset TOKEN</code></pre>
+        <pre><code>printf 'Dropbox token: ' >&amp;2; read -rs TOKEN &amp;&amp; { \
+  echo 'Checking token is live...'; \
+  curl -sS -o /dev/null -w 'live: HTTP %{http_code}\n' -X POST https://api.dropboxapi.com/2/users/get_current_account -H "Authorization: Bearer $TOKEN"; \
+  echo 'Revoking...'; \
+  curl -sS -o /dev/null -w 'revoke: HTTP %{http_code}\n' -X POST https://api.dropboxapi.com/2/auth/token/revoke -H "Authorization: Bearer $TOKEN"; \
+  echo 'Confirming dead...'; \
+  curl -sS -o /dev/null -w 'after: HTTP %{http_code} (401 = dead)\n' -X POST https://api.dropboxapi.com/2/users/get_current_account -H "Authorization: Bearer $TOKEN"; \
+  unset TOKEN; }</code></pre>
         <p class="cli-caption">200 = revoked. The revocation applies only to this token. <a href="https://www.dropbox.com/developers/documentation/http/documentation#auth-token-revoke" rel="noopener noreferrer">Dropbox HTTP docs — /2/auth/token/revoke</a></p>
       </div>
       <div class="cli-pane" data-shell="powershell" hidden>
-        <pre><code>$sec = Read-Host -AsSecureString 'Dropbox token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X POST https://api.dropboxapi.com/2/auth/token/revoke -H "Authorization: Bearer $TOKEN"; Remove-Variable TOKEN,sec</code></pre>
+        <pre><code>$sec = Read-Host -AsSecureString 'Dropbox token'; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec); try { $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto($b); 'Checking token is live...'; curl.exe -sS -o NUL -w 'live: HTTP %{http_code}\n' -X POST https://api.dropboxapi.com/2/users/get_current_account -H "Authorization: Bearer $TOKEN"; 'Revoking...'; curl.exe -sS -o NUL -w 'revoke: HTTP %{http_code}\n' -X POST https://api.dropboxapi.com/2/auth/token/revoke -H "Authorization: Bearer $TOKEN"; 'Confirming dead...'; curl.exe -sS -o NUL -w 'after: HTTP %{http_code} (401 = dead)\n' -X POST https://api.dropboxapi.com/2/users/get_current_account -H "Authorization: Bearer $TOKEN"; } finally { if ($b -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }; $sec.Dispose(); Remove-Variable TOKEN -ErrorAction SilentlyContinue }</code></pre>
         <p class="cli-caption">200 = revoked. The revocation applies only to this token. <a href="https://www.dropbox.com/developers/documentation/http/documentation#auth-token-revoke" rel="noopener noreferrer">Dropbox HTTP docs — /2/auth/token/revoke</a></p>
       </div>
       <button class="copy-btn" type="button">Copy</button>
@@ -163,14 +183,19 @@
         <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
       </div>
       <div class="cli-pane" data-shell="bash">
-        <pre><code>read -rs "Google token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
-  -X POST https://oauth2.googleapis.com/revoke \
-  --data-urlencode "token=$TOKEN"; unset TOKEN</code></pre>
-        <p class="cli-caption">200 = revoked. 400 = already invalid or malformed. <a href="https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#revocation" rel="noopener noreferrer">Google OAuth docs — token revocation</a></p>
+        <pre><code>printf 'Google token: ' >&amp;2; read -rs TOKEN &amp;&amp; { \
+  echo 'Checking token is live...'; \
+  curl -sS -o /dev/null -w 'live: HTTP %{http_code} (access tokens only)\n' "https://oauth2.googleapis.com/tokeninfo?access_token=$TOKEN"; \
+  echo 'Revoking...'; \
+  curl -sS -o /dev/null -w 'revoke: HTTP %{http_code}\n' -X POST https://oauth2.googleapis.com/revoke --data-urlencode "token=$TOKEN"; \
+  echo 'Confirming dead...'; \
+  curl -sS -o /dev/null -w 'after: HTTP %{http_code} (400 = dead)\n' "https://oauth2.googleapis.com/tokeninfo?access_token=$TOKEN"; \
+  unset TOKEN; }</code></pre>
+        <p class="cli-caption">200 = revoked. 400 = already invalid or malformed. <a href="https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#revocation" rel="noopener noreferrer">Google OAuth docs — token revocation</a> Three steps (access tokens): live check (200), revoke (200), confirm dead (400). Refresh tokens cannot be verified from a client — the live/after lines will not be meaningful.</p>
       </div>
       <div class="cli-pane" data-shell="powershell" hidden>
-        <pre><code>$sec = Read-Host -AsSecureString 'Google token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X POST https://oauth2.googleapis.com/revoke --data-urlencode "token=$TOKEN"; Remove-Variable TOKEN,sec</code></pre>
-        <p class="cli-caption">200 = revoked. 400 = already invalid or malformed. <a href="https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#revocation" rel="noopener noreferrer">Google OAuth docs — token revocation</a></p>
+        <pre><code>$sec = Read-Host -AsSecureString 'Google token'; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec); try { $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto($b); 'Checking token is live...'; curl.exe -sS -o NUL -w 'live: HTTP %{http_code} (access tokens only)\n' "https://oauth2.googleapis.com/tokeninfo?access_token=$TOKEN"; 'Revoking...'; curl.exe -sS -o NUL -w 'revoke: HTTP %{http_code}\n' -X POST https://oauth2.googleapis.com/revoke --data-urlencode "token=$TOKEN"; 'Confirming dead...'; curl.exe -sS -o NUL -w 'after: HTTP %{http_code} (400 = dead)\n' "https://oauth2.googleapis.com/tokeninfo?access_token=$TOKEN"; } finally { if ($b -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }; $sec.Dispose(); Remove-Variable TOKEN -ErrorAction SilentlyContinue }</code></pre>
+        <p class="cli-caption">200 = revoked. 400 = already invalid or malformed. <a href="https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#revocation" rel="noopener noreferrer">Google OAuth docs — token revocation</a> Three steps (access tokens): live check (200), revoke (200), confirm dead (400). Refresh tokens cannot be verified from a client — the live/after lines will not be meaningful.</p>
       </div>
       <button class="copy-btn" type="button">Copy</button>
     </div>
