@@ -1,0 +1,7 @@
+services:
+  revoke-me:
+    build: .
+    ports:
+      - "8080:80"
+    read_only: true
+    restart: unless-stopped

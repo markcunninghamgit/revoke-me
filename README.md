@@ -5,8 +5,15 @@ leaked secret/token; the page identifies the provider, shows you *whose* credent
 (login, team, account), and revokes the token directly from your browser against the
 provider's own self-revoke endpoint.
 
-**No backend. No server. No database. No logging.** Everything runs client-side against the
-provider's public API.
+**No backend. No server. No database. No logging.** This is static code, hosted as-is:
+three files (HTML, CSS, JS) served by GitHub Pages with no build step and no runtime.
+Everything runs client-side against the provider's public API. If you don't trust this
+host, the site is trivially self-hostable — see [Self-hosting](#self-hosting-with-docker).
+
+## License
+
+Released under the [Unlicense](LICENSE) — dedicated to the public domain. Copy it, modify
+it, sell it, run it anywhere, no restrictions, no attribution required.
 
 ## What it does
 
@@ -70,5 +77,29 @@ turns "the API accepted it" into "the token is confirmed dead".
 
 ## Hosting
 
-GitHub Pages: serve the repository root. `index.html`, `style.css`, `app.js` — that's the
-whole site.
+GitHub Pages serves the repository root as-is. `index.html`, `style.css`, `app.js` —
+that's the whole site; the repo is the source of truth.
+
+## Self-hosting with Docker
+
+Because the site is pure static files, a self-host needs nothing but a web server. A
+minimal Dockerfile and compose file are included (nginx:alpine serving the three files,
+read-only container):
+
+```sh
+docker compose up --build -d   # → http://localhost:8080
+```
+
+or without compose:
+
+```sh
+docker build -t revoke-me .
+docker run -d -p 8080:80 --read-only --name revoke-me revoke-me
+```
+
+The nginx config serves only static files — no CGI, no proxying, nothing dynamic —
+so the self-hosted instance is exactly as trustworthy as the hosted one: read the
+30-odd lines of config, then verify the served files match the repo.
+
+Even simpler: clone the repo and open `index.html` directly from disk. Everything
+works from `file://` too — that's the whole point of a static site.

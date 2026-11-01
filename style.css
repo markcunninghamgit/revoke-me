@@ -20,7 +20,15 @@ h1 {
   letter-spacing: 0.03em;
 }
 
-.tagline { color: #9198a1; }
+.tagline { color: #9198a1; margin-bottom: 0; }
+
+.static-note {
+  color: #9198a1;
+  font-size: 0.9rem;
+  border-left: 3px solid #30363d;
+  padding-left: 0.75rem;
+  margin-top: 0.75rem;
+}
 
 #input-section {
   background: #161b22;

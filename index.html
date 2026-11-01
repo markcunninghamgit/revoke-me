@@ -21,6 +21,10 @@
   <header>
     <h1>revoke.me</h1>
     <p class="tagline">Paste a leaked token. See whose it is. Kill it — from this page, straight to the provider.</p>
+    <p class="static-note">This is <strong>static code hosted on GitHub Pages</strong> — three files (HTML/CSS/JS),
+       no backend, no server, no database. Your browser talks <strong>directly</strong> to the provider APIs;
+       nothing is sent to any server of ours, because there isn't one. View source and deploy it yourself —
+       it's in the public domain (Unlicense).</p>
   </header>
 
   <section id="input-section">
@@ -54,8 +58,10 @@
   </section>
 
   <footer>
-    <p>100% static. No backend, no logging, no persistence — the token lives in one JS
-       variable and is wiped on unload (or the <em>Wipe</em> button).</p>
+    <p>100% static code, served as-is. No backend, no logging, no persistence — the token
+       lives in one JS variable and is wiped on unload (or the <em>Wipe</em> button).</p>
+    <p>Don't trust this host? The whole site is three files in a public-domain repo —
+       run it yourself with one Docker command, or just open the files from disk.</p>
     <p>The CSP on this page allows outbound connections <strong>only</strong> to
        api.github.com, slack.com, oauth2.googleapis.com, api.dropboxapi.com, and
        gitlab.com — view source; nothing here phones home.</p>
