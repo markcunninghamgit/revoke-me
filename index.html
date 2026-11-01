@@ -94,7 +94,7 @@
   curl -sS -o /dev/null -w 'revoke: HTTP %{http_code}\n' -X POST https://api.github.com/credentials/revoke -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' --data "{\"credentials\":[\"$TOKEN\"]}"; \
   echo 'Confirming dead...'; \
   curl -sS -o /dev/null -w 'after: HTTP %{http_code} (401 = dead)\n' -H "Authorization: Bearer $TOKEN" https://api.github.com/user; \
-  unset TOKEN; }</code></pre>
+  }; unset TOKEN</code></pre>
         <p class="cli-caption">202 = revoked. Unauthenticated endpoint — no auth header. <a href="https://docs.github.com/en/rest/credentials/revoke" rel="noopener noreferrer">GitHub API docs — credentials/revoke</a> Three steps: live check (200), revoke (202), confirm dead (401). If the live check already shows 401, the token is dead — nothing was killed; check you pasted the right key.</p>
       </div>
       <div class="cli-pane" data-shell="powershell" hidden>
