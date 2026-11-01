@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none';
+               script-src 'self';
+               style-src 'self';
+               connect-src https://api.github.com https://slack.com
+                           https://oauth2.googleapis.com https://api.dropboxapi.com
+                           https://gitlab.com;
+               base-uri 'none';
+               form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>revoke.me</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>revoke.me</h1>
+    <p class="tagline">Paste a leaked token. See whose it is. Kill it — from this page, straight to the provider.</p>
+  </header>
+
+  <section id="input-section">
+    <label for="token-input">Leaked secret / token</label>
+    <div class="input-row">
+      <input id="token-input" type="password" autocomplete="off" spellcheck="false"
+             placeholder="paste the token here — it never leaves this page except to the provider">
+      <button id="reveal-btn" type="button" aria-label="Toggle visibility">Show</button>
+    </div>
+    <div class="input-row">
+      <label for="provider-select">Provider</label>
+      <select id="provider-select">
+        <option value="auto" selected>Auto-detect (or pick manually)</option>
+        <option value="github">GitHub</option>
+        <option value="slack">Slack</option>
+        <option value="gitlab">GitLab (gitlab.com only)</option>
+        <option value="dropbox">Dropbox</option>
+        <option value="google">Google (OAuth token)</option>
+      </select>
+      <button id="wipe-btn" type="button">Wipe</button>
+    </div>
+    <p id="detect-note" class="note" aria-live="polite"></p>
+  </section>
+
+  <section id="status-section" hidden>
+    <div id="status-box" class="status" role="status" aria-live="polite"></div>
+    <pre id="status-detail" class="detail"></pre>
+    <div id="action-row">
+      <button id="revoke-btn" type="button" hidden>Revoke</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>100% static. No backend, no logging, no persistence — the token lives in one JS
+       variable and is wiped on unload (or the <em>Wipe</em> button).</p>
+    <p>The CSP on this page allows outbound connections <strong>only</strong> to
+       api.github.com, slack.com, oauth2.googleapis.com, api.dropboxapi.com, and
+       gitlab.com — view source; nothing here phones home.</p>
+    <p>GitLab: gitlab.com only (self-hosted instances are out of scope).</p>
+  </footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

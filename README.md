@@ -1,1 +1,74 @@
-# revoke-me
+# revoke.me
+
+A single-page, fully static website for incident response on leaked credentials. Paste a
+leaked secret/token; the page identifies the provider, shows you *whose* credential it is
+(login, team, account), and revokes the token directly from your browser against the
+provider's own self-revoke endpoint.
+
+**No backend. No server. No database. No logging.** Everything runs client-side against the
+provider's public API.
+
+## What it does
+
+1. **Detect** the provider from the token pattern (GitHub `ghp_…`, Slack `xoxb-…`,
+   GitLab `glpat-…`, Google heuristics), with a manual dropdown fallback for token types
+   that aren't reliably pattern-matchable (Dropbox).
+2. **Pre-check** (whoami/info call): shows the compromised identity — login and scopes for
+   GitHub, team and user for Slack, token metadata for GitLab, account name/email for
+   Dropbox — and confirms the token is live. If it's already dead: "already invalid —
+   nothing to do" and no revoke call is sent.
+3. **Confirm**: identity info plus a single Revoke button. Nothing is auto-revoked on paste.
+4. **Revoke** via the provider's endpoint.
+5. **Post-check**: re-run the info call. Live-before + dead-after = `CONFIRMED_REVOKED`
+   (with a 1-second retry to absorb propagation delay). Otherwise the page reports
+   `SENT_UNVERIFIED` with honest messaging rather than pretending.
+
+## Threat model — why pasting a live secret into a hosted page is OK here
+
+You are pasting a live secret into a hosted page. That should make you nervous, so here is
+exactly why it's safe here:
+
+- **The repo is the source of truth.** GitHub Pages serves *exactly* what's committed to
+  this repository — there is no build step, no server-side rendering, no runtime
+  dependency resolution. What you view-source is what runs.
+- **Zero external dependencies.** No CDN, no web fonts, no analytics, no third-party
+  scripts, no images from other origins. Plain HTML/CSS/JS.
+- **Mechanical CSP enforcement.** The page's Content-Security-Policy allowlists
+  `connect-src` to exactly five provider API origins
+  (api.github.com, slack.com, oauth2.googleapis.com, api.dropboxapi.com, gitlab.com).
+  The browser makes it *technically impossible* for this page to send the secret anywhere
+  else. Verify it yourself: try `fetch('https://example.com')` in devtools on the hosted
+  page and watch it get blocked.
+- **No persistence.** The token lives in one JavaScript variable. No localStorage, no
+  sessionStorage, no cookies. It is wiped on page unload, and a **Wipe** button clears it
+  on demand.
+- **No logging.** The token is never written to the console, error messages, or the URL.
+- **View source — nothing here phones home.**
+
+## Supported providers
+
+| Provider | Token types | Confirmable? |
+|-----------|-------------|--------------|
+| GitHub | `ghp_`, `gho_`, `ghu_`, `ghr_`, `github_pat_` | Yes — post-check `401` |
+| Slack | `xoxb-`, `xoxp-`, `xoxa-`, `xoxr-`, `xoxs-`, `xapps-` | Yes — `token_revoked` |
+| GitLab | `glpat-` (gitlab.com only; self-hosted out of scope) | Yes — post-check `401` |
+| Dropbox | manual dropdown (not pattern-matchable) | Yes — post-check `401` |
+| Google | OAuth access (`ya29.`) / refresh (`1//`) tokens | Access: via `tokeninfo`; Refresh: `SENT_UNVERIFIED` |
+
+Twilio, npm, AWS, Azure, Stripe, OpenAI, and others are intentionally out of scope — their
+APIs either don't permit browser calls (CORS preflight fails) or have no self-revoke
+endpoint (revocation requires a separate authorized credential).
+
+## The identity-confirmation flow
+
+The point of the pre-check is that you shouldn't revoke blind. Before anything is sent,
+the page shows who the credential belongs to: the GitHub login and its scopes, the Slack
+team and user, the GitLab token name/scopes/expiry, the Dropbox account email. If the
+token is already dead, the page tells you so and sends nothing. Only after you see the
+identity and press Revoke does the revoke call go out — followed by a post-check that
+turns "the API accepted it" into "the token is confirmed dead".
+
+## Hosting
+
+GitHub Pages: serve the repository root. `index.html`, `style.css`, `app.js` — that's the
+whole site.
