@@ -57,6 +57,109 @@
     </div>
   </section>
 
+  <section id="cli-section">
+    <h2>Prefer a terminal? Do it without this page.</h2>
+    <p class="cli-note">These commands are <strong>static</strong> — they are fixed text, not built from
+       anything you type into this page. The token is read interactively by the command itself
+       (hidden prompt, never stored, never in shell history). Works on macOS/Linux (bash/zsh)
+       and Windows (PowerShell). You don't need to paste anything here to use these.</p>
+
+    <div class="cli-block" data-cli="github">
+      <h3>GitHub</h3>
+      <div class="cli-tabs">
+        <button class="cli-tab active" type="button" data-shell="bash">macOS / Linux (bash, zsh)</button>
+        <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
+      </div>
+      <div class="cli-pane" data-shell="bash">
+        <pre><code>read -rs "GitHub token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
+  -X POST https://api.github.com/credentials/revoke \
+  -H 'Accept: application/vnd.github+json' \
+  -H 'Content-Type: application/json' \
+  --data "{\"credentials\":[\"$TOKEN\"]}"; unset TOKEN</code></pre>
+        <p class="cli-caption">202 = revoked. Unauthenticated endpoint — no auth header. <a href="https://docs.github.com/en/rest/credentials/revoke" rel="noopener noreferrer">GitHub API docs — credentials/revoke</a></p>
+      </div>
+      <div class="cli-pane" data-shell="powershell" hidden>
+        <pre><code>$sec = Read-Host -AsSecureString 'GitHub token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X POST https://api.github.com/credentials/revoke -H 'Accept: application/vnd.github+json' -H 'Content-Type: application/json' --data "{\"credentials\\":[\"$TOKEN\"]}"; Remove-Variable TOKEN,sec</code></pre>
+        <p class="cli-caption">202 = revoked. Unauthenticated endpoint — no auth header. <a href="https://docs.github.com/en/rest/credentials/revoke" rel="noopener noreferrer">GitHub API docs — credentials/revoke</a></p>
+      </div>
+      <button class="copy-btn" type="button">Copy</button>
+    </div>
+
+    <div class="cli-block" data-cli="slack">
+      <h3>Slack</h3>
+      <div class="cli-tabs">
+        <button class="cli-tab active" type="button" data-shell="bash">macOS / Linux (bash, zsh)</button>
+        <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
+      </div>
+      <div class="cli-pane" data-shell="bash">
+        <pre><code>read -rs "Slack token: " TOKEN &amp;&amp; curl -sS https://slack.com/api/auth.revoke \
+  --data-urlencode "token=$TOKEN"; printf '\n'; unset TOKEN</code></pre>
+        <p class="cli-caption">{"ok":true,"revoked":true} in the reply means revoked. <a href="https://docs.slack.dev/reference/methods/auth.revoke/" rel="noopener noreferrer">Slack API docs — auth.revoke</a></p>
+      </div>
+      <div class="cli-pane" data-shell="powershell" hidden>
+        <pre><code>$sec = Read-Host -AsSecureString 'Slack token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS https://slack.com/api/auth.revoke --data-urlencode "token=$TOKEN"; ''; Remove-Variable TOKEN,sec</code></pre>
+        <p class="cli-caption">{"ok":true,"revoked":true} in the reply means revoked. <a href="https://docs.slack.dev/reference/methods/auth.revoke/" rel="noopener noreferrer">Slack API docs — auth.revoke</a></p>
+      </div>
+      <button class="copy-btn" type="button">Copy</button>
+    </div>
+
+    <div class="cli-block" data-cli="gitlab">
+      <h3>GitLab (gitlab.com)</h3>
+      <div class="cli-tabs">
+        <button class="cli-tab active" type="button" data-shell="bash">macOS / Linux (bash, zsh)</button>
+        <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
+      </div>
+      <div class="cli-pane" data-shell="bash">
+        <pre><code>read -rs "GitLab token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
+  -X DELETE "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; unset TOKEN</code></pre>
+        <p class="cli-caption">204 = revoked. 401 beforehand = already dead. <a href="https://docs.gitlab.com/api/personal_access_tokens/" rel="noopener noreferrer">GitLab API docs — personal access tokens (self-revoke)</a></p>
+      </div>
+      <div class="cli-pane" data-shell="powershell" hidden>
+        <pre><code>$sec = Read-Host -AsSecureString 'GitLab token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X DELETE "https://gitlab.com/api/v4/personal_access_tokens/self?private_token=$TOKEN"; Remove-Variable TOKEN,sec</code></pre>
+        <p class="cli-caption">204 = revoked. 401 beforehand = already dead. <a href="https://docs.gitlab.com/api/personal_access_tokens/" rel="noopener noreferrer">GitLab API docs — personal access tokens (self-revoke)</a></p>
+      </div>
+      <button class="copy-btn" type="button">Copy</button>
+    </div>
+
+    <div class="cli-block" data-cli="dropbox">
+      <h3>Dropbox</h3>
+      <div class="cli-tabs">
+        <button class="cli-tab active" type="button" data-shell="bash">macOS / Linux (bash, zsh)</button>
+        <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
+      </div>
+      <div class="cli-pane" data-shell="bash">
+        <pre><code>read -rs "Dropbox token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
+  -X POST https://api.dropboxapi.com/2/auth/token/revoke \
+  -H "Authorization: Bearer $TOKEN"; unset TOKEN</code></pre>
+        <p class="cli-caption">200 = revoked. The revocation applies only to this token. <a href="https://www.dropbox.com/developers/documentation/http/documentation#auth-token-revoke" rel="noopener noreferrer">Dropbox HTTP docs — /2/auth/token/revoke</a></p>
+      </div>
+      <div class="cli-pane" data-shell="powershell" hidden>
+        <pre><code>$sec = Read-Host -AsSecureString 'Dropbox token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X POST https://api.dropboxapi.com/2/auth/token/revoke -H "Authorization: Bearer $TOKEN"; Remove-Variable TOKEN,sec</code></pre>
+        <p class="cli-caption">200 = revoked. The revocation applies only to this token. <a href="https://www.dropbox.com/developers/documentation/http/documentation#auth-token-revoke" rel="noopener noreferrer">Dropbox HTTP docs — /2/auth/token/revoke</a></p>
+      </div>
+      <button class="copy-btn" type="button">Copy</button>
+    </div>
+
+    <div class="cli-block" data-cli="google">
+      <h3>Google</h3>
+      <div class="cli-tabs">
+        <button class="cli-tab active" type="button" data-shell="bash">macOS / Linux (bash, zsh)</button>
+        <button class="cli-tab" type="button" data-shell="powershell">Windows (PowerShell)</button>
+      </div>
+      <div class="cli-pane" data-shell="bash">
+        <pre><code>read -rs "Google token: " TOKEN &amp;&amp; curl -sS -o /dev/null -w 'HTTP %{http_code}\n' \
+  -X POST https://oauth2.googleapis.com/revoke \
+  --data-urlencode "token=$TOKEN"; unset TOKEN</code></pre>
+        <p class="cli-caption">200 = revoked. 400 = already invalid or malformed. <a href="https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#revocation" rel="noopener noreferrer">Google OAuth docs — token revocation</a></p>
+      </div>
+      <div class="cli-pane" data-shell="powershell" hidden>
+        <pre><code>$sec = Read-Host -AsSecureString 'Google token'; $TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)); curl.exe -sS -o $null -w 'HTTP %{http_code}\n' -X POST https://oauth2.googleapis.com/revoke --data-urlencode "token=$TOKEN"; Remove-Variable TOKEN,sec</code></pre>
+        <p class="cli-caption">200 = revoked. 400 = already invalid or malformed. <a href="https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow#revocation" rel="noopener noreferrer">Google OAuth docs — token revocation</a></p>
+      </div>
+      <button class="copy-btn" type="button">Copy</button>
+    </div>
+  </section>
+
   <footer>
     <p>100% static code, served as-is. No backend, no logging, no persistence — the token
        lives in one JS variable and is wiped on unload (or the <em>Wipe</em> button).</p>
@@ -64,7 +167,8 @@
        run it yourself with one Docker command, or just open the files from disk.</p>
     <p>The CSP on this page allows outbound connections <strong>only</strong> to
        api.github.com, slack.com, oauth2.googleapis.com, api.dropboxapi.com, and
-       gitlab.com — view source; nothing here phones home.</p>
+       gitlab.com — view source; nothing here phones home.
+       Full source: <a href="https://github.com/markcunninghamgit/revoke-me">github.com/markcunninghamgit/revoke-me</a></p>
     <p>GitLab: gitlab.com only (self-hosted instances are out of scope).</p>
   </footer>
 </main>

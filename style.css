@@ -126,3 +126,47 @@ footer {
   border-top: 1px solid #30363d;
   padding-top: 1rem;
 }
+
+#cli-section {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+#cli-section h2 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+
+.cli-note { color: #9198a1; font-size: 0.9rem; margin-top: 0; }
+
+.cli-block {
+  margin-top: 1.25rem;
+  border-top: 1px solid #30363d;
+  padding-top: 1rem;
+}
+
+.cli-block h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+
+.cli-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+.cli-tab { font-size: 0.8rem; padding: 0.35rem 0.7rem; }
+
+.cli-tab.active { background: #30363d; border-color: #58a6ff; }
+
+.cli-pane pre {
+  margin: 0;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+}
+
+.cli-caption { color: #9198a1; font-size: 0.8rem; margin: 0.35rem 0 0; }
+
+.copy-btn { margin-top: 0.5rem; font-size: 0.85rem; }
+
+footer a { color: #58a6ff; }
+
+.cli-caption a { color: #58a6ff; }
