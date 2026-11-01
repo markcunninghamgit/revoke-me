@@ -38,6 +38,20 @@ jobs:
       - name: Smoke test
         run: node tests/smoke.js
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python package (hash-pinned)
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --require-hashes -r requirements.txt
+          .venv/bin/pip install -e . --no-deps pytest
+
+      - name: Python tests
+        run: .venv/bin/python -m pytest tests/test_providers.py tests/test_cli.py -v
+
       - name: Build Docker image
         run: docker build -t revoke-me:ci .
 
@@ -88,6 +102,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build Python distributions
+        run: |
+          python -m venv .venv-rel
+          .venv-rel/bin/pip install -q build
+          .venv-rel/bin/python -m build
+
       - name: Bundle static site
         run: zip -r site.zip index.html style.css app.js
 
@@ -99,7 +119,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ steps.tag.outputs.name }}" site.zip \
+          gh release create "${{ steps.tag.outputs.name }}" site.zip dist/*.whl dist/*.tar.gz \
             --repo "$GITHUB_REPOSITORY" \
             --title "revoke-me ${{ steps.tag.outputs.name }}" \
-            --notes "Static site bundle (index.html, style.css, app.js). Docker image: ghcr.io/${{ github.repository_owner }}/revoke-me@${{ github.sha }}"
+            --notes "Static site bundle (index.html, style.css, app.js) and Python package (sdist + wheel; pip-installable). Docker image: ghcr.io/${{ github.repository_owner }}/revoke-me@${{ github.sha }}"

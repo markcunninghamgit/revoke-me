@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "revoke-me"
+version = "1.0.0"
+description = "Revoke leaked API tokens (GitHub, Slack, GitLab, Dropbox, Google) directly from the command line"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Unlicense"
+license-files = ["LICENSE"]
+authors = [{ name = "revoke-me contributors" }]
+keywords = ["security", "incident-response", "token", "revoke", "credentials"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies = ["requests>=2.28"]
+
+[project.urls]
+Homepage = "https://github.com/markcunninghamgit/revoke-me"
+Issues = "https://github.com/markcunninghamgit/revoke-me/issues"
+
+[project.scripts]
+revoke-me = "revoke_me.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
