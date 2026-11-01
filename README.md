@@ -42,27 +42,35 @@ provider directly (their web UI or API) before considering a credential killed.
    (with a 1-second retry to absorb propagation delay). Otherwise the page reports
    `SENT_UNVERIFIED` with honest messaging rather than pretending.
 
-## Threat model — why pasting a live secret into a hosted page is OK here
+## Threat model — pasting a live secret into a hosted page
 
-You are pasting a live secret into a hosted page. That should make you nervous, so here is
-exactly why it's safe here:
+You are pasting a live secret into a hosted page. **That is not OK — and this project's
+own website says so on a banner at the top of every page.** You should never paste live
+tokens into a website you didn't host yourself, this one included. Reading the source
+once proves nothing about tomorrow's copy, and the draft/untested status makes trust even
+less warranted.
 
-- **The repo is the source of truth.** GitHub Pages serves *exactly* what's committed to
-  this repository — there is no build step, no server-side rendering, no runtime
-  dependency resolution. What you view-source is what runs.
+What follows is **not** a justification for using the hosted copy. It's the defense-in-depth
+that limits the damage *if you choose to anyway*, and what to check when you host it yourself:
+
+- **The repo is the source of truth — for a copy you control.** GitHub Pages serves
+  *exactly* what's committed, with no build step or runtime. So clone the repo, read every
+  line (it's three files plus a small CLI), and serve your own copy. Then what you reviewed
+  is what runs, and nobody can change it out from under you.
 - **Zero external dependencies.** No CDN, no web fonts, no analytics, no third-party
-  scripts, no images from other origins. Plain HTML/CSS/JS.
-- **Mechanical CSP enforcement.** The page's Content-Security-Policy allowlists
-  `connect-src` to exactly five provider API origins
-  (api.github.com, slack.com, oauth2.googleapis.com, api.dropboxapi.com, gitlab.com).
-  The browser makes it *technically impossible* for this page to send the secret anywhere
-  else. Verify it yourself: try `fetch('https://example.com')` in devtools on the hosted
-  page and watch it get blocked.
+  scripts. When you host it yourself there is nothing to phone home and nothing that can
+  be silently swapped for a newer, backdoored version.
+- **Mechanical CSP enforcement.** The Content-Security-Policy allowlists `connect-src` to
+  exactly five provider API origins. The browser makes it *technically impossible* for the
+  page to send the secret anywhere else — this holds for the hosted copy too, and it's the
+  one property you can verify from devtools on any copy: try
+  `fetch('https://example.com')` and watch it get blocked.
 - **No persistence.** The token lives in one JavaScript variable. No localStorage, no
-  sessionStorage, no cookies. It is wiped on page unload, and a **Wipe** button clears it
-  on demand.
-- **No logging.** The token is never written to the console, error messages, or the URL.
-- **View source — nothing here phones home.**
+  sessionStorage, no cookies. Wiped on page unload, plus a **Wipe** button.
+- **No logging.** The token never reaches the console, error messages, or the URL.
+
+None of that changes the recommendation: **don't paste live tokens into this or any hosted
+copy — clone it, read it, host it yourself.**
 
 ## Supported providers
 
