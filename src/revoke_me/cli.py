@@ -52,18 +52,23 @@ def main(argv=None):
     session = requests.Session()
     session.headers.update({"User-Agent": "revoke-me-cli"})
 
-    # Pre-check
+    # Pre-check: verify the token is LIVE before revoking, so a wrong
+    # paste or an already-dead key is never mistaken for a successful kill.
+    print("Checking token is live...")
     live, identity, err = providers.pre_check(provider, token, session)
     if err:
         print("PRE-CHECK ERROR: " + err)
+        print("Could not verify the token is live — NOT revoking. Check the key or the endpoint status.")
         return 2
     if live is False:
-        print("ALREADY_DEAD: token is already invalid — nothing to do")
+        print("ALREADY_DEAD: token is already invalid — nothing to do.")
+        print("No revoke was sent. If you expected this token to be live, you may have pasted")
+        print("the wrong key, or it was revoked/expired before now.")
         return 0
     if live is None:
-        print("no readable pre-check for this provider/token type; continuing")
+        print("WARNING: no readable liveness check for this token type; cannot verify before revoking.")
     else:
-        print("token is LIVE and belongs to:")
+        print("Token is LIVE and belongs to:")
         print("  " + identity.replace("\n", "\n  "))
 
     if args.no_revoke:
@@ -77,22 +82,27 @@ def main(argv=None):
             return 1
 
     # Revoke
+    print("Revoking...")
     sent, _detail, err = providers.revoke(provider, token, session)
     if err or not sent:
         print("FAILED: " + (err or "revoke was not accepted"))
+        print("The token may still be live — verify manually before assuming it is dead.")
         return 2
 
-    # Post-check (1s propagation retry, same as the website)
+    # Post-check (1s propagation retry, same as the website): confirm the
+    # token is now dead; live-before + dead-after = actually revoked.
+    print("Confirming dead...")
     import time
     time.sleep(1)
     if providers.post_check(provider, token, session):
-        print("CONFIRMED_REVOKED: token was live before and is dead after revoke")
+        print("CONFIRMED_REVOKED: token was live before the revoke and is dead after it")
         return 0
     print(
-        "SENT_UNVERIFIED: revoke was accepted, but the post-check could not "
-        "confirm" + (" (Google refresh tokens cannot be verified from a client)" if provider == "google" else "")
+        "SENT_UNVERIFIED: the revoke was accepted, but the post-check could not "
+        "confirm the token is dead. It may still be live — verify manually" +
+        (" (Google refresh tokens cannot be verified from a client)" if provider == "google" else "")
     )
-    return 0
+    return 3
 
 
 if __name__ == "__main__":
