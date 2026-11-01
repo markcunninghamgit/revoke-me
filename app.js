@@ -555,3 +555,42 @@ async function runFlow() {
 
 tokenInput.addEventListener('paste', () => { setTimeout(runFlow, 0); });
 tokenInput.addEventListener('change', runFlow);
+
+// ---------------------------------------------------------------------------
+// CLI command section: shell tabs (bash/zsh vs PowerShell) + copy buttons.
+// The commands are static text; nothing here reads or stores a token.
+// ---------------------------------------------------------------------------
+
+document.querySelectorAll('.cli-block').forEach((block) => {
+  const tabs = block.querySelectorAll('.cli-tab');
+  const panes = block.querySelectorAll('.cli-pane');
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.toggle('active', t === tab));
+      panes.forEach((p) => { p.hidden = p.dataset.shell !== tab.dataset.shell; });
+    });
+  });
+  block.querySelector('.copy-btn').addEventListener('click', (ev) => {
+    const visible = Array.from(panes).find((p) => !p.hidden);
+    const text = visible.querySelector('code').textContent;
+    const btn = ev.currentTarget;
+    const done = () => { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => { fallbackCopy(text); done(); });
+    } else {
+      fallbackCopy(text);
+      done();
+    }
+  });
+});
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) { /* best effort */ }
+  document.body.removeChild(ta);
+}
