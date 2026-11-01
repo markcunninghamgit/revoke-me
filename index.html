@@ -44,23 +44,27 @@
   </header>
 
   <section id="input-section">
-    <label for="token-input">Leaked secret / token</label>
-    <div class="input-row">
-      <input id="token-input" type="password" autocomplete="off" spellcheck="false"
-             placeholder="paste the token here — it never leaves this page except to the provider">
-      <button id="reveal-btn" type="button" aria-label="Toggle visibility">Show</button>
+    <div class="field">
+      <label for="token-input">Leaked secret / token</label>
+      <div class="control-row">
+        <input id="token-input" type="password" autocomplete="off" spellcheck="false"
+               placeholder="paste the token here — it never leaves this page except to the provider">
+        <button id="reveal-btn" type="button" aria-label="Toggle visibility">Show</button>
+      </div>
     </div>
-    <div class="input-row">
+    <div class="field">
       <label for="provider-select">Provider</label>
-      <select id="provider-select">
-        <option value="auto" selected>Auto-detect (or pick manually)</option>
-        <option value="github">GitHub</option>
-        <option value="slack">Slack</option>
-        <option value="gitlab">GitLab (gitlab.com only)</option>
-        <option value="dropbox">Dropbox</option>
-        <option value="google">Google (OAuth token)</option>
-      </select>
-      <button id="wipe-btn" type="button">Wipe</button>
+      <div class="control-row">
+        <select id="provider-select">
+          <option value="auto" selected>Auto-detect (or pick manually)</option>
+          <option value="github">GitHub</option>
+          <option value="slack">Slack</option>
+          <option value="gitlab">GitLab (gitlab.com only)</option>
+          <option value="dropbox">Dropbox</option>
+          <option value="google">Google (OAuth token)</option>
+        </select>
+        <button id="wipe-btn" type="button">Wipe</button>
+      </div>
     </div>
     <p id="detect-note" class="note" aria-live="polite"></p>
   </section>

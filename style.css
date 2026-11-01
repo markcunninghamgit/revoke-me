@@ -2,11 +2,12 @@
 
 body {
   margin: 0;
-  padding: 2rem 1rem;
+  padding: 1rem 0.75rem;
   background: #0d1117;
   color: #e6edf3;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
 }
 
 main {
@@ -34,47 +35,50 @@ h1 {
   background: #161b22;
   border: 1px solid #30363d;
   border-radius: 8px;
-  padding: 1.25rem;
-  margin-top: 1.5rem;
+  padding: 1rem;
+  margin-top: 1.25rem;
 }
 
 label { display: block; font-weight: 600; margin-bottom: 0.35rem; }
 
-.input-row {
+.field { margin-bottom: 1rem; }
+.field:last-of-type { margin-bottom: 0; }
+
+/* Mobile-first: control fills the row, action button sits below it.
+   Wide screens put them side by side via the media query below. */
+.control-row {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  align-items: center;
 }
 
-#token-input {
-  flex: 1;
-  padding: 0.6rem 0.75rem;
-  background: #0d1117;
-  color: #e6edf3;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  font-family: ui-monospace, monospace;
-  font-size: 0.95rem;
-}
-
+#token-input,
 #provider-select {
-  flex: 1;
-  padding: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 0.75rem;
   background: #0d1117;
   color: #e6edf3;
   border: 1px solid #30363d;
   border-radius: 6px;
+  font-size: 16px; /* prevents iOS zoom-on-focus */
+}
+
+#token-input { font-family: ui-monospace, monospace; }
+
+#reveal-btn,
+#wipe-btn {
+  align-self: stretch;
 }
 
 button {
-  padding: 0.6rem 1rem;
+  padding: 0.7rem 1rem;
   background: #21262d;
   color: #e6edf3;
   border: 1px solid #30363d;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  min-height: 44px; /* comfortable touch target */
 }
 
 button:hover { background: #30363d; }
@@ -127,11 +131,47 @@ footer {
   padding-top: 1rem;
 }
 
+/* Wide screens: restore side-by-side input rows and roomier padding */
+@media (min-width: 640px) {
+  body { padding: 2rem 1rem; }
+
+  #input-section,
+  #cli-section,
+  #status-section { padding: 1.25rem; }
+
+  .control-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  #token-input,
+  #provider-select { flex: 1; width: auto; }
+
+  #reveal-btn,
+  #wipe-btn { align-self: auto; }
+}
+
+/* Small phones: keep code blocks readable and scrollable horizontally */
+@media (max-width: 420px) {
+  h1 { font-size: 1.5rem; }
+
+  #warning-banner,
+  #input-section,
+  #status-section,
+  #cli-section { border-radius: 6px; }
+
+  .cli-pane pre { font-size: 0.75rem; }
+
+  .detail { font-size: 0.8rem; }
+
+  footer { font-size: 0.8rem; }
+}
+
 #cli-section {
   background: #161b22;
   border: 1px solid #30363d;
   border-radius: 8px;
-  padding: 1.25rem;
+  padding: 1rem;
   margin-top: 1rem;
 }
 
@@ -147,7 +187,7 @@ footer {
 
 .cli-block h3 { margin: 0 0 0.5rem; font-size: 1rem; }
 
-.cli-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+.cli-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
 
 .cli-tab { font-size: 0.8rem; padding: 0.35rem 0.7rem; }
 
@@ -193,3 +233,18 @@ footer a { color: #58a6ff; }
 #warning-banner p:last-child { margin-bottom: 0; }
 
 #warning-banner a { color: #58a6ff; }
+
+/* Command blocks: scroll within the block, never stretch the page */
+.cli-pane pre {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.detail { max-width: 100%; }
+
+/* Warning banner: slightly tighter on small screens */
+@media (max-width: 420px) {
+  #warning-banner { padding: 1rem; }
+  #warning-banner h2 { font-size: 1rem; }
+  #warning-banner p { font-size: 0.9rem; }
+}
